@@ -440,12 +440,24 @@ void SettingsWindow::highlightTextInLabel(QLabel* label, const QString& searchTe
 
     QString text = label->text();
 
-    if (text.toLower().contains(searchText)) {
-        QString escapedSearch = QRegularExpression::escape(searchText);
-        QRegularExpression regex(escapedSearch, QRegularExpression::CaseInsensitiveOption);
+    if (text.toLower().contains(searchText.toLower())) {
+        QRegularExpression regex(QRegularExpression::escape(searchText),
+                                 QRegularExpression::CaseInsensitiveOption);
 
-        QString highlighted = text.replace(regex,
-                                           QString("<span style='background-color: #FFEB3B;'>%1</span>").arg(searchText));
+        QRegularExpressionMatchIterator matches = regex.globalMatch(text);
+        QString highlighted;
+        int lastPos = 0;
+
+        while (matches.hasNext()) {
+            QRegularExpressionMatch match = matches.next();
+            highlighted += text.mid(lastPos, match.capturedStart() - lastPos);
+            QString matchedText = match.captured();
+            highlighted += QString("<span style='background-color: #FFEB3B;'>%1</span>")
+                               .arg(matchedText);
+            lastPos = match.capturedEnd();
+        }
+
+        highlighted += text.mid(lastPos);
 
         label->setText(highlighted);
     }
